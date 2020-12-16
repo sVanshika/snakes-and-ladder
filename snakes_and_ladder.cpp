@@ -1,79 +1,154 @@
-#include<iostream>
-#include<queue>
-#define INT_MAX 1000000
+/* ===== ===== =====
+Theory of Programming
+Solving Snakes and Ladders game using BFS
+http://theoryofprogramming.com/2014/12/25/snakes-and-ladders-game-code/
+GitHub - https://github.com/VamsiSangam/theoryofprogramming
+Code Contributor - Vamsi Sangam
+===== ===== ===== */
+
+#include <algorithm>
+#include <cstdio>
+#include <vector>
+#include <list>
+#include <utility>
+
 using namespace std;
-/* Author : Prateek Narang */
 
-
-int findMinMoves(int *board,int n){
-//We will use BFS to calculate shortest path
-//moves[i] maintains the min number of moves to reach position i
-int moves[n+6];
-for(int i=0;i<n;i++){
-    moves[i] = INT_MAX;
-}
-queue<int> q;
-/* Game starts from 0 */
-q.push(0);
-moves[0] = 0;
-
-int parent[37];
-parent[0]=0;
-
-    while(!q.empty()){
-        int current = q.front();
-        q.pop();
-        for(int i=1;i<=6;i++){
-            if(current+i<n)
-                {
-                    if(moves[current+i+board[current+i]]==INT_MAX){
-                    /* As BFS calculates shortest path on first time,so we need to update move matrix only once */
-                    moves[current+i+board[current+i]] = moves[current]+1;
-                    q.push(current+i+board[current+i]);
-
-                    /* Parent is required to print the path */
-                    parent[current+i+board[current+i]] = current;
-                    }
-                }
-            }
+void replaceEdgeFor6PreceedingVertices(vector< list<int> >& adjacencyList, int startVertex, int oldEdge, int newEdge)
+{
+    // For the 6 vertices preceeding 'startVertex' do the edge replacement
+    for (int i = startVertex - 1; i >= startVertex - 6 && i > 0; --i) {
+        std::replace(adjacencyList[i].begin(), adjacencyList[i].end(), oldEdge, newEdge);
     }
-/* Code to print the moves */
-int i=n-1;
-cout<<n-1<<"<--";
-while(i!=0){
-    cout<<parent[i]<<" <--";
-    i = parent[i];
-}
-cout<<endl;
-
-/*Return the number of Moves */
-return moves[n-1];
 }
 
+void printPathFromSourceToDestination(int parent[], int destination)
+{
+    if (parent[destination] == -1) {
+        // We have reached the source vertex
+        printf("%d -> ", destination);
+    } else {
+        printPathFromSourceToDestination(parent, parent[destination]);
+        printf("%d -> ", destination);
+    }
+}
 
-int main(){
-    /*Since it is a linear games (1,2....n) we need to maintain only a linear array for board
-    Note : We don't require a 2-D array.
-    */
+void breadthFirstSearch(vector< list<int> > adjacencyList, int parent[], int level[], int start)
+{
+    list<int>::iterator itr;
 
-    int board[37] ={0};  //Game Index is 1 based
-        /*All board positions are 0 except those which have ladder have +ve values , Snakes have
-        -ve values .Values are assigned on the basis of relative displacement between two positions.*/
-        board[2] = 13;
-        board[5] = 2;
-        board[9] = 28;
-        board[18] = 11;
-        board[17] = -13;
-        board[20] = -14;
-        board[24] = -8;
-        board[25] = 10;
-        board[32] = -2;
-        board[34] = -22;
-    /*
-    for(int i=0;i<36;i++)
-        cout<<board[i]<<" ";
-    */
-cout<<"The min no of moves required to reach 36 is "<<findMinMoves(board,37);
-cout<<endl;
-return 0;
+    // Level of start vertex will be 0, the level of all its adjcent
+    // vertices will be 1, their adjacent vertices will be 2, and so on
+    level[start] = 0;
+
+    list<int> queue; // Queue of vertices to be processed
+
+    queue.push_back(start); // Add start vertex to the queue
+
+    while (!queue.empty()) // While there are vertices to be processed
+    {
+        // Get the first vertex in the queue.
+        // Note - .front() does not remove the front element.
+        int newVertex = queue.front();
+ 
+        // Iterator to explore all the vertices adjacent to it
+        itr = adjacencyList[newVertex].begin();
+ 
+        while (itr != adjacencyList[newVertex].end()) {
+            if (level[*itr] == -1) {                // Check if it is an unvisited vertex
+                level[*itr] = level[newVertex] + 1; // Set level of adjacent vertex
+                parent[*itr] = newVertex;           // Set parent of adjacent vertex
+                queue.push_back(*itr);              // Add the adjacent vertex to queue
+            }
+
+            ++itr;
+        }
+
+        queue.pop_front(); // Pop out the processed vertex
+    }
+}
+ 
+int main()
+{
+    int vertices = 100;
+
+    // Creating an Adjacency List of size 100
+    vector< list<int> > adjacencyList(vertices + 1);
+
+    // Populate the Adjacency List with edges representing
+    // the 6 possible moves from each vertex.
+    for (int i = 1; i <= vertices; ++i) {
+        for (int j = i + 1; j <= i + 6 && j <= vertices; ++j) {
+            adjacencyList[i].push_back(j);
+        }
+    }
+
+    char temp; // To scan space between integers
+    int numOfLadders, numOfSnakes;
+
+    printf("Enter number of ladders -\n");
+    scanf("%d", &numOfLadders);
+    printf("Enter the ladder which goes from V1 -> V2\n");
+
+    for (int i = 1; i <= numOfLadders; ++i) {
+        int v1, v2;
+
+        scanf("%d%c%d", &v1, &temp, &v2);
+        replaceEdgeFor6PreceedingVertices(adjacencyList, v1 /* startVertex */, v1 /* oldEdge */, v2 /* newEdge */);
+
+        // Edges associated with v1 can be removed
+        adjacencyList[v1].clear();
+    }
+
+    printf("Enter number of snakes -\n");
+    scanf("%d", &numOfSnakes);
+    printf("Enter the snake which goes from V1 -> V2\n");
+
+    for (int i = 1; i <= numOfSnakes; ++i) {
+        int v1, v2;
+
+        scanf("%d%c%d", &v1, &temp, &v2);
+        replaceEdgeFor6PreceedingVertices(adjacencyList, v1 /* startVertex */, v1 /* oldEdge */, v2 /* newEdge */);
+
+        // Edges associated with v1 can be removed
+        adjacencyList[v1].clear();
+    }
+
+    printf("\nThe Adjacency List-\n");
+
+    // Printing Adjacency List
+    for (int i = 1; i < adjacencyList.size(); ++i) {
+        printf("adjacencyList[%d] ", i);
+
+        list<int>::iterator itr = adjacencyList[i].begin();
+
+        while (itr != adjacencyList[i].end()) {
+            printf(" -> %d", *itr);
+            ++itr;
+        }
+        printf("\n");
+    }
+
+    // The regular BFS stuff below
+    int parent[vertices + 1];
+    int level[vertices + 1];
+
+    // Initialising our arrays
+    for (int i = 0; i <= vertices; ++i) {
+        parent[i] = -1;
+        level[i] = -1;
+    }
+
+    breadthFirstSearch(adjacencyList, parent, level, 1); // Main BFS method
+
+    // Level of the 100th vertex would be the minimum number
+    // of moves requried to finish the game.
+    printf("\nMinimum number of moves required to finish the game = %d\n", level[100]);
+
+    // Print path from Vertex 1 to Vertex 100
+    printf("Shortest path to finish the game = ");
+    printPathFromSourceToDestination(parent, 100);
+    printf("\n");
+
+    return 0;
 }
