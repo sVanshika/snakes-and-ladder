@@ -1,11 +1,3 @@
-/* ===== ===== =====
-Theory of Programming
-Solving Snakes and Ladders game using BFS
-http://theoryofprogramming.com/2014/12/25/snakes-and-ladders-game-code/
-GitHub - https://github.com/VamsiSangam/theoryofprogramming
-Code Contributor - Vamsi Sangam
-===== ===== ===== */
-
 #include <algorithm>
 #include <cstdio>
 #include <vector>
